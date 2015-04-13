@@ -3,6 +3,7 @@ package com.chais.stormy;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -12,6 +13,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -27,11 +31,13 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements
+		GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private static final String TAG = MainActivity.class.getSimpleName();
 	private CurrentWeather mCurrentWeather;
 	@InjectView(R.id.timeLabel) TextView mTimeLabel;
+	@InjectView(R.id.locationLabel) TextView mLocationLabel;
 	@InjectView(R.id.temperatureLabel) TextView mTemperatureLabel;
 	@InjectView(R.id.humidityValue) TextView mHumidityValue;
 	@InjectView(R.id.precipValue) TextView mPrecipValue;
@@ -41,8 +47,10 @@ public class MainActivity extends Activity {
 	@InjectView(R.id.progressBar) ProgressBar mProgressBar;
 
 	private final String mApiKey = "807f790501f3841dd94c54f8ef1e7ff2";
-	private final double mLatitude = 9.460018;
-	private final double mLongitude = -99.239414;
+	private double mLatitude = 19.460018;
+	private double mLongitude = -99.239414;
+	private GoogleApiClient mGoogleApiClient;
+	private Location mLastLocation;
 
 
 	@Override
@@ -55,22 +63,36 @@ public class MainActivity extends Activity {
 		mRefreshImageView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				getForecast(mLatitude, mLongitude);
+				getForecast();
 			}
 		});
 
-		getForecast(mLatitude, mLongitude);
-
-		Log.d(TAG, "Main UI code");
+		buildGoogleApiClient();
 	}
 
-	private void getForecast(double latitude, double longitude) {
+	@Override
+	protected void onStart() {
+		super.onStart();
+		mGoogleApiClient.connect();
+		getForecast();
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		if (mGoogleApiClient.isConnected()) {
+			mGoogleApiClient.disconnect();
+		}
+	}
+
+	private void getForecast() {
 		if(!isNetworkAvailable()) {
 			networkUnavailableError();
 			return;
 		}
 
 		toggleRefresh();
+		mGoogleApiClient.connect();
 
 		String mForecastUrl = "https://api.forecast.io/forecast/" + mApiKey + "/" +
 				mLatitude + "," + mLongitude;
@@ -137,14 +159,18 @@ public class MainActivity extends Activity {
 		mSummaryLabel.setText(mCurrentWeather.getSummary());
 		Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
 		mIconImageView.setImageDrawable(drawable);
+		mLocationLabel.setText(mCurrentWeather.getTimeZone());
 	}
 
 	private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
 		JSONObject forecast = new JSONObject(jsonData);
 		String timezone = forecast.getString("timezone");
+		timezone = timezone.substring(timezone.indexOf("/") + 1)
+						    .replace('_', ' ');
 
 		JSONObject currently = forecast.getJSONObject("currently");
 		CurrentWeather currentWeather = new CurrentWeather();
+		currentWeather.setTimeZone(timezone);
 		currentWeather.setIcon(currently.getString("icon"));
 		currentWeather.setTime(currently.getLong("time"));
 		currentWeather.setTemperature(
@@ -184,5 +210,49 @@ public class MainActivity extends Activity {
 		bundle.putString("message", getString(R.string.network_unavailable_message));
 		dialog.setArguments(bundle);
 		dialog.show(getFragmentManager(), "error_dialog");
+	}
+
+	private void locationUnavailableError() {
+		AlertDialogFragment dialog = new AlertDialogFragment();
+		Bundle bundle = new Bundle();
+		bundle.putString("title", getString(R.string.error_title));
+		bundle.putString("message", getString(R.string.location_unavailable_message));
+		dialog.setArguments(bundle);
+		dialog.show(getFragmentManager(), "error_dialog");
+	}
+
+	protected synchronized void buildGoogleApiClient() {
+		mGoogleApiClient = new GoogleApiClient.Builder(this)
+				.addConnectionCallbacks(this)
+				.addOnConnectionFailedListener(this)
+				.addApi(LocationServices.API)
+				.build();
+	}
+
+	@Override
+	public void onConnected(Bundle bundle) {
+		Log.i(TAG, "onConnected");
+		mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+				mGoogleApiClient);
+		if (mLastLocation != null) {
+			Log.i(TAG, String.valueOf(mLastLocation.getLatitude()));
+			Log.i(TAG, String.valueOf(mLastLocation.getLongitude()));
+			mLatitude = mLastLocation.getLatitude();
+			mLongitude = mLastLocation.getLongitude();
+		} else {
+			locationUnavailableError();
+		}
+	}
+
+	@Override
+	public void onConnectionSuspended(int i) {
+		Log.i(TAG, "Connection suspended");
+		mGoogleApiClient.connect();
+	}
+
+	@Override
+	public void onConnectionFailed(ConnectionResult connectionResult) {
+		Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " +
+				connectionResult.getErrorCode());
 	}
 }
