@@ -47,8 +47,8 @@ public class MainActivity extends Activity implements
 	@InjectView(R.id.progressBar) ProgressBar mProgressBar;
 
 	private final String mApiKey = "807f790501f3841dd94c54f8ef1e7ff2";
-	private double mLatitude = 19.460018;
-	private double mLongitude = -99.239414;
+	private double mLatitude = 0;
+	private double mLongitude = 0;
 	private GoogleApiClient mGoogleApiClient;
 	private Location mLastLocation;
 
@@ -74,7 +74,6 @@ public class MainActivity extends Activity implements
 	protected void onStart() {
 		super.onStart();
 		mGoogleApiClient.connect();
-		getForecast();
 	}
 
 	@Override
@@ -93,6 +92,8 @@ public class MainActivity extends Activity implements
 
 		toggleRefresh();
 		mGoogleApiClient.connect();
+
+		Log.i(TAG, "Connected: " + mGoogleApiClient.isConnected());
 
 		String mForecastUrl = "https://api.forecast.io/forecast/" + mApiKey + "/" +
 				mLatitude + "," + mLongitude;
@@ -116,16 +117,16 @@ public class MainActivity extends Activity implements
 					String jsonData = response.body().string();
 					Log.v(TAG, jsonData);
 					if (response.isSuccessful()) {
-						mCurrentWeather = getCurrentDetails(jsonData);
+						mCurrentWeather = new CurrentWeather(jsonData);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								updateDisplay();
 							}
 						});
-
 					} else{
-						alertUserAboutError();
+						showErrorDialog(getString(R.string.error_title),
+								getString(R.string.error_message));
 					}
 				} catch (IOException e) {
 					Log.e(TAG, "Exception caught: ", e);
@@ -162,30 +163,6 @@ public class MainActivity extends Activity implements
 		mLocationLabel.setText(mCurrentWeather.getTimeZone());
 	}
 
-	private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
-		JSONObject forecast = new JSONObject(jsonData);
-		String timezone = forecast.getString("timezone");
-		timezone = timezone.substring(timezone.indexOf("/") + 1)
-						    .replace('_', ' ');
-
-		JSONObject currently = forecast.getJSONObject("currently");
-		CurrentWeather currentWeather = new CurrentWeather();
-		currentWeather.setTimeZone(timezone);
-		currentWeather.setIcon(currently.getString("icon"));
-		currentWeather.setTime(currently.getLong("time"));
-		currentWeather.setTemperature(
-				CurrentWeather.FahrenheitToCelsius(currently.getDouble("temperature")));
-		currentWeather.setHumidity(currently.getDouble("humidity"));
-		currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-		Log.i(TAG, "From JSON: " + currently.getDouble("precipProbability"));
-		currentWeather.setSummary(currently.getString("summary"));
-		currentWeather.setTimeZone(timezone);
-
-		Log.i(TAG, currentWeather.getFormattedTime());
-
-		return currentWeather;
-	}
-
 	private boolean isNetworkAvailable() {
 		ConnectivityManager manager =
 				(ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -195,28 +172,25 @@ public class MainActivity extends Activity implements
 	}
 
 	private void alertUserAboutError() {
-		AlertDialogFragment dialog = new AlertDialogFragment();
-		Bundle bundle = new Bundle();
-		bundle.putString("title", getString(R.string.error_title));
-		bundle.putString("message", getString(R.string.error_message));
-		dialog.setArguments(bundle);
-		dialog.show(getFragmentManager(), "error_dialog");
+		showErrorDialog(getString(R.string.error_title),
+				getString(R.string.error_message));
 	}
 
 	private void networkUnavailableError() {
-		AlertDialogFragment dialog = new AlertDialogFragment();
-		Bundle bundle = new Bundle();
-		bundle.putString("title", getString(R.string.error_title));
-		bundle.putString("message", getString(R.string.network_unavailable_message));
-		dialog.setArguments(bundle);
-		dialog.show(getFragmentManager(), "error_dialog");
+		showErrorDialog(getString(R.string.error_title),
+				getString(R.string.network_unavailable_message));
 	}
 
 	private void locationUnavailableError() {
+		showErrorDialog(getString(R.string.error_title),
+				getString(R.string.location_unavailable_message));
+	}
+
+	private void showErrorDialog(String title, String message) {
 		AlertDialogFragment dialog = new AlertDialogFragment();
 		Bundle bundle = new Bundle();
-		bundle.putString("title", getString(R.string.error_title));
-		bundle.putString("message", getString(R.string.location_unavailable_message));
+		bundle.putString("title", title);
+		bundle.putString("message", message);
 		dialog.setArguments(bundle);
 		dialog.show(getFragmentManager(), "error_dialog");
 	}
@@ -239,6 +213,7 @@ public class MainActivity extends Activity implements
 			Log.i(TAG, String.valueOf(mLastLocation.getLongitude()));
 			mLatitude = mLastLocation.getLatitude();
 			mLongitude = mLastLocation.getLongitude();
+			getForecast();
 		} else {
 			locationUnavailableError();
 		}

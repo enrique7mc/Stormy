@@ -1,5 +1,8 @@
 package com.chais.stormy;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -19,6 +22,24 @@ public class CurrentWeather {
 
 	public CurrentWeather() {
 		formatter.setTimeZone(TimeZone.getDefault());
+	}
+
+	public CurrentWeather(String jsonData) throws JSONException{
+		JSONObject forecast = new JSONObject(jsonData);
+		int offset = forecast.getInt("offset");
+		String timezone = forecast.getString("timezone");
+		timezone = timezone.substring(timezone.indexOf("/") + 1)
+				.replace('_', ' ');
+
+		JSONObject currently = forecast.getJSONObject("currently");
+		this.setTimeZone(timezone);
+		this.setIcon(currently.getString("icon"));
+		this.setTime(currently.getLong("time") + (offset * 3600));
+		this.setTemperature(FahrenheitToCelsius(currently.getDouble("temperature")));
+		this.setHumidity(currently.getDouble("humidity"));
+		this.setPrecipChance(currently.getDouble("precipProbability"));
+		this.setSummary(currently.getString("summary"));
+		this.setTimeZone(timezone);
 	}
 
 	public String getTimeZone() {
