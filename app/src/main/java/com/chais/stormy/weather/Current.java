@@ -1,4 +1,6 @@
-package com.chais.stormy;
+package com.chais.stormy.weather;
+
+import com.chais.stormy.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,7 +12,7 @@ import java.util.TimeZone;
 /**
  * Created by Enrique on 07/04/2015.
  */
-public class CurrentWeather {
+public class Current {
 	private String mIcon;
 	private long mTime;
 	private double mTemperature;
@@ -20,11 +22,11 @@ public class CurrentWeather {
 	private String mTimeZone;
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
 
-	public CurrentWeather() {
+	public Current() {
 		formatter.setTimeZone(TimeZone.getDefault());
 	}
 
-	public CurrentWeather(String jsonData) throws JSONException{
+	public Current(String jsonData) throws JSONException{
 		JSONObject forecast = new JSONObject(jsonData);
 		int offset = forecast.getInt("offset");
 		String timezone = forecast.getString("timezone");

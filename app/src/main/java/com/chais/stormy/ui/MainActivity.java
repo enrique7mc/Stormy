@@ -1,4 +1,4 @@
-package com.chais.stormy;
+package com.chais.stormy.ui;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,6 +13,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.chais.stormy.R;
+import com.chais.stormy.weather.Current;
+import com.chais.stormy.weather.Forecast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -23,7 +26,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -35,7 +37,7 @@ public class MainActivity extends Activity implements
 		GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private static final String TAG = MainActivity.class.getSimpleName();
-	private CurrentWeather mCurrentWeather;
+	private Forecast mForecast;
 	@InjectView(R.id.timeLabel) TextView mTimeLabel;
 	@InjectView(R.id.locationLabel) TextView mLocationLabel;
 	@InjectView(R.id.temperatureLabel) TextView mTemperatureLabel;
@@ -95,7 +97,7 @@ public class MainActivity extends Activity implements
 
 		Log.i(TAG, "Connected: " + mGoogleApiClient.isConnected());
 
-		String mForecastUrl = "https://api.forecast.io/forecast/" + mApiKey + "/" +
+		final String mForecastUrl = "https://api.forecast.io/forecast/" + mApiKey + "/" +
 				mLatitude + "," + mLongitude;
 		OkHttpClient client = new OkHttpClient();
 		Request request = new Request.Builder()
@@ -117,7 +119,7 @@ public class MainActivity extends Activity implements
 					String jsonData = response.body().string();
 					Log.v(TAG, jsonData);
 					if (response.isSuccessful()) {
-						mCurrentWeather = new CurrentWeather(jsonData);
+						mForecast = new Forecast(jsonData);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -153,14 +155,15 @@ public class MainActivity extends Activity implements
 	}
 
 	private void updateDisplay() {
-		mTemperatureLabel.setText(mCurrentWeather.getTemperature() + "");
-		mTimeLabel.setText("At " + mCurrentWeather.getFormattedTime() + " it will be");
-		mHumidityValue.setText(mCurrentWeather.getHumidity() + "");
-		mPrecipValue.setText(mCurrentWeather.getPrecipChance() + "%");
-		mSummaryLabel.setText(mCurrentWeather.getSummary());
-		Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconId());
+		Current current = mForecast.getCurrent();
+		mTemperatureLabel.setText(current.getTemperature() + "");
+		mTimeLabel.setText("At " + current.getFormattedTime() + " it will be");
+		mHumidityValue.setText(current.getHumidity() + "");
+		mPrecipValue.setText(current.getPrecipChance() + "%");
+		mSummaryLabel.setText(current.getSummary());
+		Drawable drawable = getResources().getDrawable(current.getIconId());
 		mIconImageView.setImageDrawable(drawable);
-		mLocationLabel.setText(mCurrentWeather.getTimeZone());
+		mLocationLabel.setText(current.getTimeZone());
 	}
 
 	private boolean isNetworkAvailable() {
