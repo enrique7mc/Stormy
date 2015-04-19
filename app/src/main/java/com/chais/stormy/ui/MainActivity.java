@@ -2,6 +2,7 @@ package com.chais.stormy.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -31,12 +32,16 @@ import java.io.IOException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 
 
 public class MainActivity extends Activity implements
 		GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private static final String TAG = MainActivity.class.getSimpleName();
+	public static final String DAILY_FORECAST = "DAILY_FORECAST";
+	public static final String TIMEZONE = "TIMEZONE";
+	public static final String HOURLY_FORECAST = "HOURLY_FORECAST";
 	private Forecast mForecast;
 	@InjectView(R.id.timeLabel) TextView mTimeLabel;
 	@InjectView(R.id.locationLabel) TextView mLocationLabel;
@@ -54,7 +59,6 @@ public class MainActivity extends Activity implements
 	private GoogleApiClient mGoogleApiClient;
 	private Location mLastLocation;
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -70,11 +74,6 @@ public class MainActivity extends Activity implements
 		});
 
 		buildGoogleApiClient();
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
 		mGoogleApiClient.connect();
 	}
 
@@ -232,5 +231,20 @@ public class MainActivity extends Activity implements
 	public void onConnectionFailed(ConnectionResult connectionResult) {
 		Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " +
 				connectionResult.getErrorCode());
+	}
+
+	@OnClick(R.id.dailyButton)
+	public void startDailyActivity(View view) {
+		Intent intent = new Intent(this, DailyForecastActivity.class);
+		intent.putExtra(DAILY_FORECAST, mForecast.getDailyForecast());
+		intent.putExtra(TIMEZONE, mForecast.getCurrent().getTimeZone());
+		startActivity(intent);
+	}
+	
+	@OnClick(R.id.hourlyButton)
+	public void startHourlyActivity(View view) {
+		Intent intent = new Intent(this, HourlyForecastActivity.class);
+		intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
+		startActivity(intent);
 	}
 }
