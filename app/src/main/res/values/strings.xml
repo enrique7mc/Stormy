@@ -14,4 +14,6 @@
     <string name="title_activity_hourly_forecast">HourlyForecastActivity</string>
     <string name="info_message">On %1$s the high will be %2$s and it will be %3$s</string>
     <string name="hour_info_message">At %1$s it will be %2$s and %3$s</string>
+    <string name="title_activity_timezone_selector">TimezoneSelectorActivity</string>
+    <string name="no_timezone_data">There\'s no data</string>
 </resources>

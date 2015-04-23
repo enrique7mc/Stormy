@@ -87,24 +87,6 @@ public class MainActivity extends Activity implements
 		}
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.menu_main, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int id = item.getItemId();
-
-		//noinspection SimplifiableIfStatement
-		if (id == R.id.action_settings) {
-			return true;
-		}
-
-		return super.onOptionsItemSelected(item);
-	}
-
 	private void getForecast() {
 		if(!isNetworkAvailable()) {
 			networkUnavailableError();
@@ -265,6 +247,12 @@ public class MainActivity extends Activity implements
 	public void startHourlyActivity(View view) {
 		Intent intent = new Intent(this, HourlyForecastActivity.class);
 		intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
+		startActivity(intent);
+	}
+
+	@OnClick(R.id.locationLabel)
+	public void startTimezoneSelectorActivity(View view){
+		Intent intent = new Intent(this, TimezoneSelectorActivity.class);
 		startActivity(intent);
 	}
 }
