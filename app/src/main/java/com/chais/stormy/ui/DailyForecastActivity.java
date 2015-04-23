@@ -7,8 +7,11 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.chais.stormy.R;
 import com.chais.stormy.adapters.DayAdapter;
@@ -38,5 +41,18 @@ public class DailyForecastActivity extends ListActivity {
 		setListAdapter(adapter);
 
 		mLocationLabel.setText(timezone);
+	}
+
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		Day day = mDays[position];
+		String dayOfTheWeek = day.getDayOfTheWeek();
+		String conditions = day.getSummary();
+		String maxTemp = day.getTemperatureMax() + "";
+		String message = String.format(getString(R.string.info_message) ,
+				dayOfTheWeek, maxTemp, conditions);
+
+		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
 	}
 }

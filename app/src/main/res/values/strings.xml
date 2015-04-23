@@ -12,4 +12,6 @@
     <string name="no_daily_forecast_data">There is no data to display</string>
     <string name="today_label">Today</string>
     <string name="title_activity_hourly_forecast">HourlyForecastActivity</string>
+    <string name="info_message">On %1$s the high will be %2$s and it will be %3$s</string>
+    <string name="hour_info_message">At %1$s it will be %2$s and %3$s</string>
 </resources>
