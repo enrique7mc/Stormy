@@ -2,12 +2,12 @@
 This is wheather app for android, built in Android Studio.
 
 Features:  
-1. Field and method binding for Android views with Butter Knife 
-2. HTTP & SPDY client for Android and Java applications with okhttp
-3. Fragment based UI
-4. Geolocation
-5. Custom adapters y ListViews
-6. Data gathering from forecast.io API
+1. Field and method binding for Android views with Butter Knife  
+2. HTTP & SPDY client for Android and Java applications with okhttp  
+3. Fragment based UI  
+4. Geolocation  
+5. Custom adapters y ListViews  
+6. Data gathering from forecast.io API  
 
 
 **This application shows the weather predictions for the user's location with information provided by forecast.io**
